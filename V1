@@ -1,0 +1,788 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { Play, Mic, Volume2, Check, X, Trophy, Clock, ArrowRight, RotateCcw, Home, Award, AlertCircle } from 'lucide-react';
+
+// --- Data & Content ---
+const vocabularyData = [
+  { id: 1, word: "debate", ipa: "[dɪ`bet]", pos: "vt. vi.", meaning: "辯論", sentence: "At the school assembly, the student council debated the issue of adding a student-run café on campus.", mnemonic: "De (底下) + bate (打) -> 兩方在底下用嘴巴互打 -> 辯論" },
+  { id: 2, word: "penalty", ipa: "[`pɛnḷtɪ]", pos: "n. [C]", meaning: "懲罰；刑罰", sentence: "If the company fails to deliver the goods on time, it may receive a penalty under the contract.", mnemonic: "Pen (筆) + alty (罰提) -> 被罰拿筆抄寫 -> 懲罰" },
+  { id: 3, word: "imprisonment", ipa: "[ɪm`prɪzṇmənt]", pos: "n. [U]", meaning: "監禁", sentence: "The hacker was sentenced to eight years’ imprisonment for stealing private data.", mnemonic: "Im (進入) + prison (監獄) -> 進入監獄 -> 監禁" },
+  { id: 4, word: "prison", ipa: "[`prɪzṇ]", pos: "n. [U, C]", meaning: "監獄", sentence: "The man was sent to prison for ten years for armed robbery.", mnemonic: "Prison (音似: 怕人) -> 裡面都是可怕的人 -> 監獄" },
+  { id: 5, word: "claim", ipa: "[klem]", pos: "n. [C]", meaning: "說法；宣稱", sentence: "The influencer was criticized for making false claims about the product she was promoting.", mnemonic: "C (看) + laim (來) -> 看誰敢來說 -> 宣稱" },
+  { id: 6, word: "insist", ipa: "[ɪn`sɪst]", pos: "vt. vi.", meaning: "堅持", sentence: "Despite the cold weather outside, Tina’s little brother insisted that she take him to the park.", mnemonic: "In (在裡面) + sist (站立) -> 站在立場裡不動 -> 堅持" },
+  { id: 7, word: "property", ipa: "[`prɑpɚtɪ]", pos: "n. [U, C]", meaning: "地產；房地產", sentence: "The farmer put up signs and fences to remind hikers that the field was his private property, not part of the public trail.", mnemonic: "Proper (適當的) + ty -> 屬於自己適當的地方 -> 財產/地產" },
+  { id: 8, word: "companion", ipa: "[kəm`pænjən]", pos: "n. [C]", meaning: "同伴；夥伴", sentence: "I wanted a peaceful trip, but my traveling companion snored louder than the noise of the airplane engine.", mnemonic: "Com (一起) + pan (麵包) -> 一起分麵包吃的人 -> 同伴" },
+  { id: 9, word: "mental", ipa: "[`mɛntḷ]", pos: "adj.", meaning: "心理的；精神上的", sentence: "The phrase “be confident” gives me a mental image of myself trying to smile while panicking inside.", mnemonic: "Men (人) + tal (頭) -> 人頭腦裡的 -> 心理的" },
+  { id: 10, word: "devour", ipa: "[dɪ`vaʊr]", pos: "vt.", meaning: "熱切地讀；狼吞虎嚥", sentence: "The detective devoured every word in the suspect’s diary, hoping to find a clue hidden between the lines.", mnemonic: "De (向下) + vour (吞) -> 整個吞下去 -> 狼吞虎嚥/熱切地讀" },
+  { id: 11, word: "volume", ipa: "[`vɑljəm]", pos: "n. [C]", meaning: "書籍；卷", sentence: "When I asked for a volume on time travel, the librarian looked at me as if I had lost my mind.", mnemonic: "Vo (哇) + lume (路) -> 哇! 路邊好多書 -> 書籍/卷" },
+  { id: 12, word: "acquire", ipa: "[ə`kwaɪr]", pos: "vt.", meaning: "學到；習得", sentence: "Children usually acquire basic reading skills between ages six and eight.", mnemonic: "Ac (去) + quire (追求) -> 去追求得到 -> 學到/習得" },
+  { id: 13, word: "profound", ipa: "[prə`faʊnd]", pos: "adj.", meaning: "深厚的；見解深遠的", sentence: "Socrates is remembered as a profound thinker who questioned everything around him.", mnemonic: "Pro (向前) + found (發現) -> 向前發現很多道理 -> 深遠的" },
+  { id: 14, word: "wealthy", ipa: "[`wɛlθɪ]", pos: "adj.", meaning: "富有的", sentence: "Since the luxurious hotel charges over US$20,000 a night, only very wealthy people can afford to stay there.", mnemonic: "Wealth (財富) + y -> 有財富的 -> 富有的" },
+  { id: 15, word: "murder", ipa: "[`mɝdɚ]", pos: "vt.", meaning: "謀殺", sentence: "The victim was found brutally murdered in her apartment, with no signs of forced entry.", mnemonic: "Mur (音似: 沒) + der (德) -> 沒品德的事 -> 謀殺" },
+  { id: 16, word: "disgust", ipa: "[dɪs`gʌst]", pos: "n. [U]", meaning: "厭惡；反感", sentence: "Jennifer eats with her hands and spills food on her clothes, giving her brother a feeling of disgust.", mnemonic: "Dis (不) + gust (喜歡/味道) -> 不好的味道 -> 厭惡" },
+  { id: 17, word: "vain", ipa: "[ven]", pos: "adj.", meaning: "無用的；枉然的", sentence: "Hurley ran after the train in a vain attempt to catch it before it left the station.", mnemonic: "Vain (音似: 完) -> 全都完了 -> 枉然的" },
+  { id: 18, word: "worship", ipa: "[`wɝʃɪp]", pos: "vt.", meaning: "崇拜", sentence: "Esther continued to worship her childhood hero even after learning about his criminal past.", mnemonic: "Wor (價值) + ship (船/身分) -> 視為有價值 -> 崇拜" },
+  { id: 19, word: "intention", ipa: "[ɪn`tɛnʃən]", pos: "n. [C]", meaning: "打算；意圖", sentence: "It was not Jim’s intention to scare the kids with his Halloween mask; he had just wanted to surprise them.", mnemonic: "In (內) + tent (帳篷) -> 在帳篷內想計畫 -> 意圖" },
+  { id: 20, word: "abandon", ipa: "[ə`bændən]", pos: "vt.", meaning: "中止；放棄", sentence: "Anthony abandoned his efforts to fix the old car after spending too much money on repairs.", mnemonic: "A (一個) + ban (禁止) + don (做) -> 被禁止做 -> 放棄" },
+  { id: 21, word: "surrender", ipa: "[sə`rɛndɚ]", pos: "vt.", meaning: "交出；放棄；投降", sentence: "The general was forced to surrender the city to enemy forces after a long and costly battle.", mnemonic: "Sur (超過) + render (給予) -> 全都給出去了 -> 投降/交出" },
+  { id: 22, word: "guilt", ipa: "[gɪlt]", pos: "n. [U]", meaning: "內疚；罪惡感", sentence: "Many working parents feel a sense of guilt for being unable to spend more time with their children.", mnemonic: "Gui (鬼) + lt -> 心裡有鬼 -> 內疚" },
+  { id: 23, word: "rumor", ipa: "[`rumɚ]", pos: "n. [C, U]", meaning: "謠言；傳聞", sentence: "Rumors were flying that a popular video game was going to be adapted into a movie.", mnemonic: "Ru (如) + mor (魔) -> 如同魔鬼般散播 -> 謠言" },
+];
+
+// --- Utilities ---
+const speak = (text, rate = 0.9) => {
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'en-US';
+    utterance.rate = rate;
+    window.speechSynthesis.speak(utterance);
+  }
+};
+
+const getRandomItems = (arr, n) => {
+  const shuffled = [...arr].sort(() => 0.5 - Math.random());
+  return shuffled.slice(0, n);
+};
+
+// --- Components ---
+
+// 1. Learning Mode
+const LearningMode = ({ onUpdateProgress, progressData }) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isListening, setIsListening] = useState(false);
+  const [feedback, setFeedback] = useState("");
+  const currentWord = vocabularyData[currentIndex];
+
+  const handleSpeechCheck = () => {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      alert("您的瀏覽器不支援語音辨識，請使用 Chrome 或 Edge。");
+      return;
+    }
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    setIsListening(true);
+    setFeedback("請發音...");
+
+    recognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript.toLowerCase();
+      const target = currentWord.word.toLowerCase();
+      setIsListening(false);
+
+      // Simple fuzzy match check
+      if (transcript.includes(target) || target.includes(transcript)) {
+        setFeedback("Correct! 🎉");
+        speak("Correct!");
+        onUpdateProgress(currentWord.id);
+      } else {
+        setFeedback(`聽起來像: "${transcript}". 再試一次!`);
+      }
+    };
+
+    recognition.onerror = (event) => {
+      setIsListening(false);
+      setFeedback("無法辨識，請再試一次。");
+    };
+
+    recognition.onend = () => setIsListening(false);
+    recognition.start();
+  };
+
+  const nextWord = () => setCurrentIndex(prev => (prev + 1) % vocabularyData.length);
+  const prevWord = () => setCurrentIndex(prev => (prev - 1 + vocabularyData.length) % vocabularyData.length);
+
+  return (
+    <div className="max-w-2xl mx-auto bg-white rounded-xl shadow-lg p-6 min-h-[500px] flex flex-col">
+      <div className="flex justify-between items-center mb-4 text-gray-500 text-sm">
+        <span>Word {currentIndex + 1} of {vocabularyData.length}</span>
+        <span>已掌握: {Object.keys(progressData).length} / {vocabularyData.length}</span>
+      </div>
+
+      <div className="flex-1 flex flex-col items-center text-center space-y-4">
+        <h2 className="text-4xl font-bold text-indigo-600 mb-2">{currentWord.word}</h2>
+        <div className="text-xl text-gray-600 font-mono bg-gray-100 px-3 py-1 rounded">{currentWord.ipa}</div>
+        <div className="flex items-center gap-2">
+           <span className="bg-indigo-100 text-indigo-800 text-sm font-medium px-2.5 py-0.5 rounded">{currentWord.pos}</span>
+           <h3 className="text-2xl font-bold text-gray-800">{currentWord.meaning}</h3>
+        </div>
+
+        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 w-full text-left my-4">
+          <p className="font-bold text-yellow-700">💡 記憶法：</p>
+          <p className="text-gray-700">{currentWord.mnemonic}</p>
+        </div>
+
+        <div className="bg-gray-50 p-4 rounded-lg w-full text-left">
+           <div className="flex justify-between items-start">
+              <p className="text-lg text-gray-800 mb-2 leading-relaxed">{currentWord.sentence}</p>
+              <button 
+                onClick={() => speak(currentWord.sentence)}
+                className="ml-2 p-2 bg-blue-100 rounded-full hover:bg-blue-200 text-blue-600 transition"
+              >
+                <Volume2 size={20} />
+              </button>
+           </div>
+        </div>
+
+        <div className="flex gap-4 mt-auto pt-6">
+          <button onClick={() => speak(currentWord.word, 0.7)} className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-full hover:bg-green-600 shadow transition">
+            <Volume2 size={18} /> 聽單字
+          </button>
+          
+          <button 
+            onClick={handleSpeechCheck} 
+            className={`flex items-center gap-2 px-4 py-2 rounded-full shadow transition ${isListening ? 'bg-red-500 animate-pulse text-white' : 'bg-indigo-500 text-white hover:bg-indigo-600'}`}
+          >
+            <Mic size={18} /> {isListening ? "聆聽中..." : "發音檢測"}
+          </button>
+        </div>
+        
+        {feedback && (
+          <div className={`mt-3 font-bold ${feedback.includes("Correct") ? "text-green-600" : "text-red-500"}`}>
+            {feedback}
+          </div>
+        )}
+      </div>
+
+      <div className="flex justify-between mt-8 pt-4 border-t">
+        <button onClick={prevWord} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded">上一字</button>
+        <button onClick={nextWord} className="px-6 py-2 bg-gray-800 text-white rounded hover:bg-gray-700">下一字 <ArrowRight className="inline w-4 h-4 ml-1"/></button>
+      </div>
+    </div>
+  );
+};
+
+// 2. Game 1: Matching
+const GameMatching = ({ onComplete }) => {
+  const [shuffledWords, setShuffledWords] = useState([]);
+  const [shuffledMeanings, setShuffledMeanings] = useState([]);
+  const [selectedWord, setSelectedWord] = useState(null);
+  const [matched, setMatched] = useState([]);
+  const [timeLeft, setTimeLeft] = useState(0);
+  const [gameState, setGameState] = useState('intro'); // intro, playing, finished
+  const timerRef = useRef(null);
+
+  useEffect(() => {
+    return () => clearInterval(timerRef.current);
+  }, []);
+
+  const startGame = () => {
+    // Take all words
+    const words = [...vocabularyData];
+    // Shuffle left side
+    setShuffledWords([...words].sort(() => Math.random() - 0.5));
+    // Shuffle right side
+    setShuffledMeanings([...words].sort(() => Math.random() - 0.5));
+    setMatched([]);
+    setSelectedWord(null);
+    setTimeLeft(0);
+    setGameState('playing');
+    
+    timerRef.current = setInterval(() => {
+      setTimeLeft(t => t + 1);
+    }, 1000);
+  };
+
+  const handleWordClick = (wordObj) => {
+    if (selectedWord && selectedWord.type === 'meaning') {
+      checkMatch(wordObj, selectedWord);
+    } else {
+      setSelectedWord({ ...wordObj, type: 'word' });
+    }
+  };
+
+  const handleMeaningClick = (meaningObj) => {
+    if (selectedWord && selectedWord.type === 'word') {
+      checkMatch(selectedWord, meaningObj);
+    } else {
+      setSelectedWord({ ...meaningObj, type: 'meaning' });
+    }
+  };
+
+  const checkMatch = (wordObj, meaningObj) => {
+    if (wordObj.id === meaningObj.id) {
+      const newMatched = [...matched, wordObj.id];
+      setMatched(newMatched);
+      setSelectedWord(null);
+      if (newMatched.length === vocabularyData.length) {
+        endGame(true);
+      }
+    } else {
+      setSelectedWord(null); // Reset on wrong match
+      // Optional: Add visual error feedback here
+    }
+  };
+
+  const endGame = (success) => {
+    clearInterval(timerRef.current);
+    setGameState('finished');
+    onComplete({
+      passed: timeLeft <= 60,
+      score: timeLeft, // Lower is better
+      total: vocabularyData.length
+    });
+  };
+
+  if (gameState === 'intro') return (
+    <div className="text-center py-10">
+      <h3 className="text-2xl font-bold mb-4">單字配對挑戰</h3>
+      <p className="mb-6">請將左邊的英文單字與右邊的中文解釋配對。<br/>目標：在 <span className="text-red-500 font-bold">60秒</span> 內完成！</p>
+      <button onClick={startGame} className="px-8 py-3 bg-indigo-600 text-white rounded-lg shadow-lg hover:bg-indigo-700 text-lg font-bold">
+        開始計時
+      </button>
+    </div>
+  );
+
+  if (gameState === 'finished') return (
+    <div className="text-center py-10">
+      <h3 className="text-3xl font-bold mb-4">{timeLeft <= 60 ? "挑戰成功! 🎉" : "逾時了! 😅"}</h3>
+      <p className="text-xl mb-6">你的時間: {timeLeft} 秒</p>
+      <button onClick={startGame} className="flex items-center justify-center mx-auto gap-2 px-6 py-2 bg-gray-200 rounded hover:bg-gray-300">
+        <RotateCcw size={18} /> 再試一次
+      </button>
+    </div>
+  );
+
+  return (
+    <div className="max-w-4xl mx-auto">
+      <div className="flex justify-between items-center mb-4 px-4 sticky top-0 bg-gray-50 p-2 z-10 shadow-sm">
+        <h3 className="font-bold text-gray-700">配對遊戲</h3>
+        <div className={`text-xl font-mono font-bold ${timeLeft > 60 ? 'text-red-500' : 'text-green-600'}`}>
+          <Clock className="inline mr-2" />
+          {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}
+        </div>
+      </div>
+      
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          {shuffledWords.map(w => (
+            !matched.includes(w.id) && (
+              <button
+                key={w.id}
+                onClick={() => handleWordClick(w)}
+                className={`w-full p-3 text-left border rounded transition-all ${selectedWord?.id === w.id && selectedWord.type === 'word' ? 'bg-indigo-100 border-indigo-500 ring-2 ring-indigo-300' : 'bg-white hover:bg-gray-50'}`}
+              >
+                {w.word}
+              </button>
+            )
+          ))}
+        </div>
+        <div className="space-y-2">
+          {shuffledMeanings.map(m => (
+            !matched.includes(m.id) && (
+              <button
+                key={m.id}
+                onClick={() => handleMeaningClick(m)}
+                className={`w-full p-3 text-left border rounded transition-all ${selectedWord?.id === m.id && selectedWord.type === 'meaning' ? 'bg-indigo-100 border-indigo-500 ring-2 ring-indigo-300' : 'bg-white hover:bg-gray-50'}`}
+              >
+                {m.meaning}
+              </button>
+            )
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// 3. Game 2: Listening
+const GameListening = ({ onComplete, recordWrongWord }) => {
+  const [questions, setQuestions] = useState([]);
+  const [currentQIndex, setCurrentQIndex] = useState(0);
+  const [score, setScore] = useState(0);
+  const [gameState, setGameState] = useState('intro'); // intro, playing, finished, feedback
+  const [selectedOption, setSelectedOption] = useState(null);
+
+  const startGame = () => {
+    // Generate 15 questions
+    const pool = getRandomItems(vocabularyData, 15);
+    const qs = pool.map(target => {
+      // Get 3 random distractors
+      const distractors = getRandomItems(vocabularyData.filter(w => w.id !== target.id), 3);
+      const options = getRandomItems([target, ...distractors], 4);
+      return { target, options };
+    });
+    setQuestions(qs);
+    setCurrentQIndex(0);
+    setScore(0);
+    setGameState('playing');
+    // Auto play first audio with slight delay
+    setTimeout(() => speak(qs[0].target.word), 500);
+  };
+
+  const handleOptionClick = (option) => {
+    if (gameState !== 'playing') return;
+    setSelectedOption(option);
+    
+    const isCorrect = option.id === questions[currentQIndex].target.id;
+    if (isCorrect) {
+      setScore(s => s + 1);
+    } else {
+      recordWrongWord(questions[currentQIndex].target.id);
+    }
+
+    setGameState('feedback');
+    
+    setTimeout(() => {
+      if (currentQIndex < 14) {
+        setCurrentQIndex(prev => prev + 1);
+        setGameState('playing');
+        setSelectedOption(null);
+        speak(questions[currentQIndex + 1].target.word);
+      } else {
+        const finalScore = isCorrect ? score + 1 : score;
+        onComplete({ passed: finalScore >= 10, score: finalScore, total: 15 });
+        setGameState('finished');
+      }
+    }, 1500);
+  };
+
+  if (gameState === 'intro') return (
+    <div className="text-center py-10">
+      <h3 className="text-2xl font-bold mb-4">聽英選中</h3>
+      <p className="mb-6">聆聽單字發音，選出正確的中文解釋。<br/>共15題，答對 <span className="text-green-600 font-bold">10題</span> 過關。</p>
+      <button onClick={startGame} className="px-8 py-3 bg-indigo-600 text-white rounded-lg shadow-lg hover:bg-indigo-700 text-lg font-bold">開始挑戰</button>
+    </div>
+  );
+
+  if (gameState === 'finished') return (
+    <div className="text-center py-10">
+      <h3 className="text-2xl font-bold mb-4">測驗結束</h3>
+      <div className="text-4xl font-bold mb-2 text-indigo-600">{score} / 15</div>
+      <p className="mb-6">{score >= 10 ? "恭喜過關! 🎉" : "請再接再厲 💪"}</p>
+      <button onClick={startGame} className="flex items-center justify-center mx-auto gap-2 px-6 py-2 bg-gray-200 rounded hover:bg-gray-300">
+        <RotateCcw size={18} /> 再試一次
+      </button>
+    </div>
+  );
+
+  const currentQ = questions[currentQIndex];
+
+  return (
+    <div className="max-w-2xl mx-auto">
+      <div className="flex justify-between items-center mb-6">
+        <span className="text-sm font-bold text-gray-500">Q: {currentQIndex + 1} / 15</span>
+        <span className="text-sm font-bold text-indigo-600">Score: {score}</span>
+      </div>
+
+      <div className="flex flex-col items-center mb-8">
+        <button 
+          onClick={() => speak(currentQ.target.word)}
+          className="w-24 h-24 rounded-full bg-indigo-100 hover:bg-indigo-200 text-indigo-600 flex items-center justify-center transition-transform hover:scale-110 shadow-md"
+        >
+          <Volume2 size={40} />
+        </button>
+        <p className="mt-2 text-gray-500 text-sm">點擊播放聲音</p>
+      </div>
+
+      <div className="grid grid-cols-1 gap-3">
+        {currentQ.options.map(opt => {
+          let btnClass = "p-4 text-lg border-2 rounded-xl text-left transition-all font-medium ";
+          if (gameState === 'feedback') {
+            if (opt.id === currentQ.target.id) btnClass += "bg-green-100 border-green-500 text-green-800";
+            else if (opt.id === selectedOption?.id) btnClass += "bg-red-100 border-red-500 text-red-800";
+            else btnClass += "bg-white border-gray-200 opacity-50";
+          } else {
+            btnClass += "bg-white border-gray-200 hover:border-indigo-400 hover:bg-indigo-50 cursor-pointer";
+          }
+
+          return (
+            <button 
+              key={opt.id}
+              disabled={gameState === 'feedback'}
+              onClick={() => handleOptionClick(opt)}
+              className={btnClass}
+            >
+              {opt.meaning}
+              {gameState === 'feedback' && opt.id === currentQ.target.id && (
+                <span className="float-right text-sm font-bold bg-white px-2 rounded text-green-600 border border-green-200">{currentQ.target.word}</span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+// 4. Game 3: Cloze
+const GameCloze = ({ onComplete, recordWrongWord }) => {
+  const [questions, setQuestions] = useState([]);
+  const [currentQIndex, setCurrentQIndex] = useState(0);
+  const [score, setScore] = useState(0);
+  const [gameState, setGameState] = useState('intro');
+  const [selectedOption, setSelectedOption] = useState(null);
+
+  const startGame = () => {
+    const pool = getRandomItems(vocabularyData, 15);
+    const qs = pool.map(target => {
+      const distractors = getRandomItems(vocabularyData.filter(w => w.id !== target.id), 3);
+      const options = getRandomItems([target, ...distractors], 4);
+      
+      // Create cloze sentence (simple case-insensitive replacement of word and its basic variations)
+      // Note: This is a simple regex replacer.
+      const regex = new RegExp(target.word + "[a-z]*", "gi");
+      const clozeSentence = target.sentence.replace(regex, "_______");
+      
+      return { target, options, clozeSentence };
+    });
+    setQuestions(qs);
+    setCurrentQIndex(0);
+    setScore(0);
+    setGameState('playing');
+  };
+
+  const handleOptionClick = (option) => {
+    if (gameState !== 'playing') return;
+    setSelectedOption(option);
+    
+    const isCorrect = option.id === questions[currentQIndex].target.id;
+    if (isCorrect) {
+      setScore(s => s + 1);
+    } else {
+      recordWrongWord(questions[currentQIndex].target.id);
+    }
+
+    setGameState('feedback');
+    
+    setTimeout(() => {
+      if (currentQIndex < 14) {
+        setCurrentQIndex(prev => prev + 1);
+        setGameState('playing');
+        setSelectedOption(null);
+      } else {
+        const finalScore = isCorrect ? score + 1 : score;
+        onComplete({ passed: finalScore >= 10, score: finalScore, total: 15 });
+        setGameState('finished');
+      }
+    }, 2000);
+  };
+
+  if (gameState === 'intro') return (
+    <div className="text-center py-10">
+      <h3 className="text-2xl font-bold mb-4">文意填空</h3>
+      <p className="mb-6">閱讀例句，選出正確的單字填入空格。<br/>共15題，答對 <span className="text-green-600 font-bold">10題</span> 過關。</p>
+      <button onClick={startGame} className="px-8 py-3 bg-indigo-600 text-white rounded-lg shadow-lg hover:bg-indigo-700 text-lg font-bold">開始挑戰</button>
+    </div>
+  );
+
+  if (gameState === 'finished') return (
+    <div className="text-center py-10">
+      <h3 className="text-2xl font-bold mb-4">測驗結束</h3>
+      <div className="text-4xl font-bold mb-2 text-indigo-600">{score} / 15</div>
+      <p className="mb-6">{score >= 10 ? "恭喜過關! 🎉" : "請再接再厲 💪"}</p>
+      <button onClick={startGame} className="flex items-center justify-center mx-auto gap-2 px-6 py-2 bg-gray-200 rounded hover:bg-gray-300">
+        <RotateCcw size={18} /> 再試一次
+      </button>
+    </div>
+  );
+
+  const currentQ = questions[currentQIndex];
+
+  return (
+    <div className="max-w-2xl mx-auto">
+      <div className="flex justify-between items-center mb-6">
+        <span className="text-sm font-bold text-gray-500">Q: {currentQIndex + 1} / 15</span>
+        <span className="text-sm font-bold text-indigo-600">Score: {score}</span>
+      </div>
+
+      <div className="bg-white p-6 rounded-xl shadow-md mb-8 min-h-[120px] flex items-center justify-center">
+        <p className="text-xl text-gray-800 font-medium leading-relaxed">
+           {gameState === 'feedback' 
+             ? currentQ.target.sentence.split(' ').map((word, i) => {
+                 if (word.toLowerCase().includes(currentQ.target.word.toLowerCase())) {
+                   return <span key={i} className="text-green-600 font-bold underline mx-1">{word}</span>
+                 }
+                 return word + " ";
+               })
+             : currentQ.clozeSentence
+           }
+        </p>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        {currentQ.options.map(opt => {
+          let btnClass = "p-4 text-lg border-2 rounded-xl text-center transition-all font-bold ";
+           if (gameState === 'feedback') {
+            if (opt.id === currentQ.target.id) btnClass += "bg-green-100 border-green-500 text-green-800";
+            else if (opt.id === selectedOption?.id) btnClass += "bg-red-100 border-red-500 text-red-800";
+            else btnClass += "bg-white border-gray-200 opacity-50";
+          } else {
+            btnClass += "bg-white border-gray-200 hover:border-indigo-400 hover:bg-indigo-50 cursor-pointer";
+          }
+
+          return (
+            <button 
+              key={opt.id}
+              disabled={gameState === 'feedback'}
+              onClick={() => handleOptionClick(opt)}
+              className={btnClass}
+            >
+              {opt.word}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+// 5. Report Card
+const ReportCard = ({ stats, wrongCounts, progressData }) => {
+  const [serialId] = useState(() => Math.random().toString(36).substr(2, 9).toUpperCase());
+  
+  const weakWords = Object.entries(wrongCounts)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 5)
+    .map(([id]) => vocabularyData.find(w => w.id === parseInt(id)));
+
+  const isComplete = stats.game1.passed && stats.game2.passed && stats.game3.passed;
+
+  return (
+    <div className="max-w-2xl mx-auto bg-white p-8 rounded-lg shadow-xl border-t-8 border-indigo-600">
+      <div className="text-center border-b pb-4 mb-6">
+        <h2 className="text-3xl font-bold text-gray-800">L1 單字學習成績單</h2>
+        <p className="text-gray-500 mt-2">流水號: <span className="font-mono bg-gray-100 px-2 rounded">{serialId}</span></p>
+      </div>
+
+      <div className="space-y-6">
+        <div>
+          <h3 className="font-bold text-gray-700 mb-2 flex items-center"><Mic className="mr-2" size={20}/> 發音檢測進度</h3>
+          <div className="w-full bg-gray-200 rounded-full h-4">
+            <div 
+              className="bg-blue-500 h-4 rounded-full transition-all duration-1000" 
+              style={{ width: `${(Object.keys(progressData).length / vocabularyData.length) * 100}%` }}
+            ></div>
+          </div>
+          <p className="text-right text-sm text-gray-600 mt-1">{Object.keys(progressData).length} / {vocabularyData.length} 完成</p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+           <div className={`p-4 rounded-lg border-2 ${stats.game1.passed ? 'border-green-500 bg-green-50' : 'border-gray-200 bg-gray-50'}`}>
+              <div className="text-center font-bold text-gray-700 mb-1">配對遊戲</div>
+              <div className="text-center text-2xl">
+                 {stats.game1.passed ? <span className="text-green-600">PASS</span> : <span className="text-gray-400">未過關</span>}
+              </div>
+              <div className="text-center text-sm text-gray-500">{stats.game1.score ? `${stats.game1.score}秒` : '--'}</div>
+           </div>
+           <div className={`p-4 rounded-lg border-2 ${stats.game2.passed ? 'border-green-500 bg-green-50' : 'border-gray-200 bg-gray-50'}`}>
+              <div className="text-center font-bold text-gray-700 mb-1">聽力測驗</div>
+              <div className="text-center text-2xl">
+                 {stats.game2.passed ? <span className="text-green-600">PASS</span> : <span className="text-gray-400">未過關</span>}
+              </div>
+              <div className="text-center text-sm text-gray-500">{stats.game2.score !== null ? `${stats.game2.score}/15` : '--'}</div>
+           </div>
+           <div className={`p-4 rounded-lg border-2 ${stats.game3.passed ? 'border-green-500 bg-green-50' : 'border-gray-200 bg-gray-50'}`}>
+              <div className="text-center font-bold text-gray-700 mb-1">文意填空</div>
+              <div className="text-center text-2xl">
+                 {stats.game3.passed ? <span className="text-green-600">PASS</span> : <span className="text-gray-400">未過關</span>}
+              </div>
+              <div className="text-center text-sm text-gray-500">{stats.game3.score !== null ? `${stats.game3.score}/15` : '--'}</div>
+           </div>
+        </div>
+
+        {weakWords.length > 0 && (
+          <div className="bg-red-50 p-4 rounded-lg border border-red-100">
+            <h3 className="font-bold text-red-800 mb-2">⚠️ 需要加強的單字 (前5名)</h3>
+            <ul className="list-disc pl-5 space-y-1 text-red-700">
+              {weakWords.map(w => (
+                <li key={w.id}>{w.word} ({w.meaning})</li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+
+      <div className="mt-8 text-center">
+        {isComplete ? (
+           <div className="bg-green-100 text-green-800 p-4 rounded-lg mb-4 flex items-center justify-center gap-2">
+             <Trophy size={24} className="text-yellow-600"/>
+             <span className="font-bold">恭喜完成所有任務！請截圖此畫面傳給老師。</span>
+           </div>
+        ) : (
+           <div className="bg-yellow-100 text-yellow-800 p-3 rounded-lg mb-4 flex items-center justify-center gap-2">
+             <AlertCircle size={20}/>
+             <span>尚未通過所有關卡，請繼續加油！</span>
+           </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// --- Main App Component ---
+
+const App = () => {
+  const [mode, setMode] = useState('menu'); // menu, learning, practice, report
+  const [subMode, setSubMode] = useState(null); // game1, game2, game3
+  
+  // Stats
+  const [progressData, setProgressData] = useState({}); // { wordId: true }
+  const [wrongCounts, setWrongCounts] = useState({}); // { wordId: count }
+  const [gameStats, setGameStats] = useState({
+    game1: { passed: false, score: null },
+    game2: { passed: false, score: null },
+    game3: { passed: false, score: null },
+  });
+
+  const handleUpdateProgress = (id) => {
+    setProgressData(prev => ({ ...prev, [id]: true }));
+  };
+
+  const recordWrong = (id) => {
+    setWrongCounts(prev => ({ ...prev, [id]: (prev[id] || 0) + 1 }));
+  };
+
+  const updateGameStats = (game, result) => {
+    setGameStats(prev => ({
+      ...prev,
+      [game]: { passed: result.passed, score: result.score }
+    }));
+    // After finishing a game, go back to practice menu
+    setTimeout(() => setSubMode(null), 100); 
+  };
+
+  const renderContent = () => {
+    if (mode === 'learning') {
+      return (
+        <div>
+           <div className="flex items-center mb-4">
+             <button onClick={() => setMode('menu')} className="text-gray-500 hover:text-gray-800 flex items-center">
+               <Home size={20} className="mr-1"/> 回首頁
+             </button>
+           </div>
+           <LearningMode onUpdateProgress={handleUpdateProgress} progressData={progressData} />
+        </div>
+      );
+    }
+
+    if (mode === 'report') {
+      return (
+        <div>
+           <div className="flex items-center mb-4">
+             <button onClick={() => setMode('menu')} className="text-gray-500 hover:text-gray-800 flex items-center">
+               <Home size={20} className="mr-1"/> 回首頁
+             </button>
+           </div>
+           <ReportCard stats={gameStats} wrongCounts={wrongCounts} progressData={progressData} />
+        </div>
+      );
+    }
+
+    if (mode === 'practice') {
+       if (subMode === 'game1') return (
+         <div>
+            <button onClick={() => setSubMode(null)} className="mb-4 text-gray-500 hover:text-gray-800">← 返回練習選單</button>
+            <GameMatching onComplete={(res) => updateGameStats('game1', res)} />
+         </div>
+       );
+       if (subMode === 'game2') return (
+         <div>
+            <button onClick={() => setSubMode(null)} className="mb-4 text-gray-500 hover:text-gray-800">← 返回練習選單</button>
+            <GameListening onComplete={(res) => updateGameStats('game2', res)} recordWrongWord={recordWrong} />
+         </div>
+       );
+       if (subMode === 'game3') return (
+         <div>
+            <button onClick={() => setSubMode(null)} className="mb-4 text-gray-500 hover:text-gray-800">← 返回練習選單</button>
+            <GameCloze onComplete={(res) => updateGameStats('game3', res)} recordWrongWord={recordWrong} />
+         </div>
+       );
+
+       return (
+         <div className="max-w-md mx-auto space-y-4">
+            <button onClick={() => setMode('menu')} className="text-gray-500 hover:text-gray-800 mb-2 flex items-center">
+               <Home size={20} className="mr-1"/> 回首頁
+            </button>
+            <h2 className="text-2xl font-bold text-center mb-6">練習模式選單</h2>
+            
+            <button onClick={() => setSubMode('game1')} className="w-full p-6 bg-white rounded-xl shadow-md hover:shadow-lg transition border-l-4 border-yellow-400 flex justify-between items-center group">
+              <div className="text-left">
+                <div className="font-bold text-xl text-gray-800 group-hover:text-yellow-600">單字配對</div>
+                <div className="text-sm text-gray-500">限時60秒挑戰</div>
+              </div>
+              {gameStats.game1.passed ? <Check className="text-green-500" /> : <ArrowRight className="text-gray-300 group-hover:text-yellow-500"/>}
+            </button>
+
+            <button onClick={() => setSubMode('game2')} className="w-full p-6 bg-white rounded-xl shadow-md hover:shadow-lg transition border-l-4 border-blue-400 flex justify-between items-center group">
+              <div className="text-left">
+                <div className="font-bold text-xl text-gray-800 group-hover:text-blue-600">聽英選中</div>
+                <div className="text-sm text-gray-500">聽力大考驗 (10/15過關)</div>
+              </div>
+              {gameStats.game2.passed ? <Check className="text-green-500" /> : <ArrowRight className="text-gray-300 group-hover:text-blue-500"/>}
+            </button>
+
+            <button onClick={() => setSubMode('game3')} className="w-full p-6 bg-white rounded-xl shadow-md hover:shadow-lg transition border-l-4 border-purple-400 flex justify-between items-center group">
+              <div className="text-left">
+                <div className="font-bold text-xl text-gray-800 group-hover:text-purple-600">文意填空</div>
+                <div className="text-sm text-gray-500">例句實戰 (10/15過關)</div>
+              </div>
+              {gameStats.game3.passed ? <Check className="text-green-500" /> : <ArrowRight className="text-gray-300 group-hover:text-purple-500"/>}
+            </button>
+
+            <div className="mt-8 text-center p-4 bg-gray-50 rounded-lg">
+               <p className="text-sm text-gray-600 mb-2">完成三關後即可領取成績單</p>
+               <button 
+                 onClick={() => setMode('report')}
+                 disabled={!gameStats.game1.passed || !gameStats.game2.passed || !gameStats.game3.passed}
+                 className={`px-6 py-2 rounded-full font-bold shadow ${gameStats.game1.passed && gameStats.game2.passed && gameStats.game3.passed ? 'bg-gradient-to-r from-green-400 to-blue-500 text-white hover:scale-105 transition' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}
+               >
+                 領取成績單
+               </button>
+            </div>
+         </div>
+       );
+    }
+
+    // Default: Main Menu
+    return (
+      <div className="max-w-4xl mx-auto text-center space-y-8 pt-10">
+        <h1 className="text-4xl md:text-5xl font-extrabold text-indigo-700 tracking-tight">
+          L1 Vocabulary Master <span className="text-yellow-500">23</span>
+        </h1>
+        <p className="text-xl text-gray-600">讓背單字變得有趣又有效率！</p>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto mt-12">
+          <button 
+            onClick={() => setMode('learning')}
+            className="flex flex-col items-center p-8 bg-white rounded-2xl shadow-xl hover:shadow-2xl hover:-translate-y-1 transition border-t-8 border-cyan-400"
+          >
+            <div className="bg-cyan-100 p-4 rounded-full mb-4 text-cyan-600">
+               <Play size={40} fill="currentColor" />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-800">A. 學習模式</h2>
+            <p className="text-gray-500 mt-2">單字卡、諧音記憶、發音檢測</p>
+          </button>
+
+          <button 
+            onClick={() => setMode('practice')}
+            className="flex flex-col items-center p-8 bg-white rounded-2xl shadow-xl hover:shadow-2xl hover:-translate-y-1 transition border-t-8 border-pink-400"
+          >
+            <div className="bg-pink-100 p-4 rounded-full mb-4 text-pink-600">
+               <Trophy size={40} />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-800">B. 練習模式</h2>
+            <p className="text-gray-500 mt-2">配對、聽力、填空三關卡</p>
+          </button>
+        </div>
+
+        <div className="mt-8">
+           <button onClick={() => setMode('report')} className="text-gray-500 underline text-sm hover:text-indigo-600">
+             查看目前成績單狀態
+           </button>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-100 p-4 md:p-8 font-sans">
+      {renderContent()}
+    </div>
+  );
+};
+
+export default App;
